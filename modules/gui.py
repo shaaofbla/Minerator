@@ -14,10 +14,11 @@ class StartPage(tk.Frame):
         tk.Frame.__init__(self)
         self.configStartPage(config)
         self.configure(bg=self.colorPalette[1])
+        self.configure(pady=10, padx=10)
         self.pack(side="top", fill = "both", expand=True)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        self.grid(column=0, row=0, sticky=(tk.N,tk.W,tk.E,tk.S))
+        self.grid(pady=10,padx=10,column=0, row=0, sticky=(tk.N,tk.W,tk.E,tk.S))
 
         self.midi = self.loadMidiFile()
         self.columnconfigure(0, weight = 1)
@@ -34,8 +35,10 @@ class StartPage(tk.Frame):
         self.putOutFileSpinboxLabel()
         self.outClipLengthSpinbox = self.putOutClipLengthSpinbox()
         self.putOutClipLengthSpinboxLabel()
+        self.heat = self.putHeatScale()
         self.putRunButton()
         self.saveButton = self.putSaveButton()
+        self.choppPrimer = self.putChoppMidiCheckbox()
 
     def configStartPage(self, config):
         self.config = config
@@ -45,11 +48,18 @@ class StartPage(tk.Frame):
 
     def loadMidiFile(self):
         self.midi = MidiFile(self.midiFilename)
+    
+    def putChoppMidiCheckbox(self):
+        var = tk.IntVar()
+        checkbox = tk.Checkbutton(self, text="Chopp primer",variable = var)
+        checkbox.grid(row=6,column=1)
+        checkbox.pack()
+        return var
 
     def putMidiButton(self):
         midiButton = tk.Button(self, text="Midi File", command=lambda: self.askForMidiFile())
         midiButton.configure(highlightbackground = self.colorPalette[1])
-        midiButton.grid(row=0, column=1)
+        midiButton.grid(row=0, column=0)
         midiButton.pack()
 
 
@@ -88,6 +98,16 @@ class StartPage(tk.Frame):
         spinbox.grid(row = 4, column =1, sticky = "W")
         spinbox.pack()
         return spinbox
+    
+    
+    def putHeatScale(self):
+        var = tk.DoubleVar()
+        scale = tk.Scale(self, from_ = 0.1, to = 2.0, orient=tk.HORIZONTAL, digits = 3, resolution = 0.01, variable=var)
+        scale.set(1.0)
+        scale.configure(background = self.colorPalette[3])
+        scale.grid(row=4, column =1, sticky ="N")
+        scale.pack()
+        return var
 
     def putOutClipLengthSpinboxLabel(self):
         label = tk.Label(self, text = "Midi-Clip Length (Bars)", bg = self.colorPalette[1])
@@ -101,9 +121,9 @@ class StartPage(tk.Frame):
 
     def putSaveButton(self):
         button = tk.Button(self, text="Save",
-                           #state=tk.DISABLED ,
+                           state=tk.DISABLED ,
                            command=lambda: self.save(), highlightbackground = self.colorPalette[2])
-        button.grid(row=6, column=1)
+        button.grid(row=6, column=0)
         button.pack()
         return button
 
@@ -122,10 +142,15 @@ class StartPage(tk.Frame):
 
     def change_dropdown(self, *args):
         self.dropDownStatus = self.dropDownSel.get()
-        print self.dropDownStatus
+        #print self.dropDownStatus
 
     def save(self):
         self.projectName = tkSimpleDialog.askstring(title="Project Name", prompt ="Give your Project a name peace!",initialvalue="Mofo3000-{}".format(timeStamp()))
+        if self.projectName == None:
+            return
         self.saveDir = tk.filedialog.askdirectory(initialdir = "./",title = "Select Directory")
+        if self.saveDir == "":
+            return
         jobSaver = saver(self)
         jobSaver.save()
+        self.saveButton.configure(state=tk.DISABLED)

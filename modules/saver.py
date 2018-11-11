@@ -1,8 +1,8 @@
 
 import os
 import re
-from shutil import copyfile
-from modules.midiUtils import chopPrimer
+from shutil import rmtree
+from modules.midiUtils import chopPrimer, loadMidiFile
 from modules.fileUtils import createDir
 
 
@@ -12,6 +12,12 @@ class saver():
         self.configSaver(parent)
         self.projectName = parent.projectName
         self.saveDir = parent.saveDir
+        self.choppPrimer = parent.choppPrimer.get()
+        self.uniqueJobnames = None
+        self.taredFile = None
+        self.processed_midi = None
+        self.jobNames = None
+        self.modeldirs = None
 
     def configSaver(self, parent):
         self.tempDir = parent.config["TEMPDIR"]
@@ -19,24 +25,36 @@ class saver():
 
     def save(self):
         self.getTempMidiFiles()
-        self.removePrimerMidiNotes()
-        self.moveMidiToTarget()
-
-
-    def moveMidiToTarget(self):
-        self.processPathes()
-        self.copyMidiFiles()
+        if self.choppPrimer:
+            self.removePrimerMidiNotes()
+        else:
+            self.loadMidi()
+        self.writeMidiToTarget()
+        self.cleanUp()
     
-    def copyMidiFiles(self):
-        #self.createTargedDirs()
+    
+    
+    def cleanUp(self):
+        self.removeTempDir()
+    
+    
+    def removeTempDir(self):
+        rmtree(self.tempDir)
+        os.mkdir(self.tempDir)
+
+    def writeMidiToTarget(self):
+        self.processPathes()
+        self.writeMidiFiles()
+    
+    def writeMidiFiles(self):
         for midi, targed in zip(self.midiFiles, self.targedFile):
             self.createTargedDir(targed)
-            copyfile(midi, targed)
+            self.processed_midi[midi].save(targed)
     
     def createTargedDir(self, targed):
         midiFilePattern = re.compile("(.*[/]).*.mid")
         targed = midiFilePattern.findall(targed)[0]
-        os.makedirs(targed)
+        createDir(targed)
 
     def processPathes(self):
         jobNamesPattern = re.compile(".*GeneratorOut[/](.*)[/].*[/].*.mid")
@@ -54,11 +72,17 @@ class saver():
             targedFile[i] = targed.replace(self.tempDir, "./{}/".format(self.projectName))
         self.targedFile = targedFile
         
+    def loadMidi(self):
+        self.processed_midi = {}
+        for midiFile in self.midiFiles:
+            midi = loadMidiFile(midiFile)
+            self.processed_midi[midiFile] = midi
+        
     def removePrimerMidiNotes(self):
-        self.processed_midi = []
+        self.processed_midi = {}
         for midiFile in self.midiFiles:
             midi = chopPrimer(self.primer, midiFile)
-            self.processed_midi.append(midi)
+            self.processed_midi[midiFile] = midi
 
     def getTempMidiFiles(self):
         jobdirs = self.getJobDir()

@@ -7,6 +7,10 @@ def collectNoteMessages(midiTrack):
             NoteMessages.append(msg)
     return NoteMessages
 
+def loadMidiFile(midiFile):
+    midi = MidiFile(midiFile)
+    return midi
+
 def collectMetaMessages(midiTrack):
     metaMessages = []
     for msg in midiTrack:

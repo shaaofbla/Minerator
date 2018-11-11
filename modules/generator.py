@@ -22,12 +22,13 @@ class magentaJob():
         self.modelChoice = parent.dropDownStatus
         self.outClipLength = parent.outClipLengthSpinbox.get()
         self.numOutFiles = parent.outFileSpinbox.get()
+        self.heat = parent.heat.get()
 
     def configMagentaJob(self,parent):
         self.tempGeneratorDir = parent.config["TEMPDIR"]
         self.generatorPath = parent.config["GENERATOR_PATH"]
         self.modelDir = parent.config["MODEL_DIR"]
-        self.midiFilename = parent.config["DEFAULT_MIDI_FILE"]
+        self.midiFilename = parent.midiFilename
         self.outDir = parent.config["OUT_DIR"]
         self.midi = MidiFile(self.midiFilename)
         self.models = parent.config["MODELS"]
@@ -47,12 +48,14 @@ class magentaJob():
         "--num_outputs={}".format(self.numOutFiles),
         "--num_steps={}".format(finalOutClipLength),
         "--condition_on_primer=true",
-        "--inject_primer_during_generation=false",
-        "--temperature=1.0"]
+        "--inject_primer_during_generation=true",
+        "--temperature={}".format(self.heat)]
         self.baseArgs = args
         
     def includingInputClipLength(self):
-        length = int((int(self.outClipLength)+self.midi.length)*16)
+        print self.outClipLength, self.midi.length
+        length = int((int(self.outClipLength)*4+self.midi.length*2)*4)
+        print length
         return length
         
     def callMagentaScript(self):
