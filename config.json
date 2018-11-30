@@ -1,0 +1,11 @@
+{
+	"WIDTH": 220,
+	"HEIGHT": 340,
+	"MODEL_DIR": "/Users/janeramba/Documents/python/Mag/",
+	"DRUM_GENERATOR_PATH": "/Users/janeramba/Documents/python/magenta/magenta/models/drums_rnn/drums_rnn_generate.py",
+	"MELODY_GENERATOR_PATH": "/Users/janeramba/Documents/python/magenta/magenta/models/polyphony_rnn/polyphony_rnn_generate.py",
+	"TEMPDIR": "./.TempGeneratorOut/",
+	"DEFAULT_MIDI_FILE": "./data/melody.mid",
+	"COLOR_PALETTE": ["#96ceb4", "#ffeead", "#ff6f69", "#ffcc5c", "#88d8b0"],
+	"DEFAULT_OUT_DIR": "./"
+}
