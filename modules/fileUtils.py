@@ -1,5 +1,5 @@
 import time
-import tkinter as tk
+import Tkinter as tk
 from mido import MidiFile
 import os
 

@@ -1,5 +1,5 @@
-import tkinter as tk
-from tkinter import simpledialog
+import Tkinter as tk
+#from Tkinter import simpledialog
 import tkSimpleDialog
 from mido import MidiFile
 
