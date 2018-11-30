@@ -6,8 +6,7 @@ import os
 import re
 
 from modules.gui import StartPage
-from modules.fileManipulator import createOutdir
-
+from modules.fileUtils import createOutdir
 
 
 class Minerator(tk.Tk):
