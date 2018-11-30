@@ -4,7 +4,7 @@ import os
 import re
 import json
 from mido import MidiFile
-from modules.fileManipulator import createModelOutDir
+#from modules.fileManipulator import createModelOutDir
 
 
 class magentaJob():
