@@ -4,7 +4,7 @@ import re
 from shutil import rmtree
 from modules.midiUtils import chopPrimer, loadMidiFile
 from modules.fileUtils import createDir
-
+from mido import MidiFile
 
 
 class saver():
@@ -22,6 +22,7 @@ class saver():
     def configSaver(self, parent):
         self.tempDir = parent.config["TEMPDIR"]
         self.primer = parent.midiFilename
+        self.models = parent.config["MODELS"]
 
     def save(self):
         self.getTempMidiFiles()
@@ -29,14 +30,12 @@ class saver():
             self.removePrimerMidiNotes()
         else:
             self.loadMidi()
+        self.renameClips()
         self.writeMidiToTarget()
         self.cleanUp()
     
-    
-    
     def cleanUp(self):
         self.removeTempDir()
-    
     
     def removeTempDir(self):
         rmtree(self.tempDir)
@@ -71,6 +70,18 @@ class saver():
         for i, targed in enumerate(targedFile):
             targedFile[i] = targed.replace(self.tempDir, "./{}/".format(self.projectName))
         self.targedFile = targedFile
+        
+    def renameClips(self):
+        print type(self.processed_midi)
+        renamed = {}
+        modelNamePattern = re.compile(".*GeneratorOut[/].*[/](.*)[/].*.mid")
+        for i, midifile in enumerate(self.processed_midi):
+            print midifile
+            midi = self.processed_midi[midifile]
+            modelName = modelNamePattern.findall(midifile)[0]
+            midi.tracks[1].name = "{}-{}".format(i, self.models[modelName]["short"])
+            renamed[midifile] = midi
+        self.processed_midi = renamed
         
     def loadMidi(self):
         self.processed_midi = {}

@@ -3,7 +3,6 @@ from tkinter import simpledialog
 import tkSimpleDialog
 from mido import MidiFile
 
-from modules.generator import modelNames
 from modules.generator import magentaJob
 from modules.fileUtils import timeStamp
 from modules.saver import saver
@@ -24,7 +23,6 @@ class StartPage(tk.Frame):
         self.columnconfigure(0, weight = 1)
         self.rowconfigure(0, weight = 1)
         self.pack(pady = 50, padx = 50)
-        self.models, _ = modelNames(self.modelDir)
         self.config["MODELS"] = self.models
         self.dropDownStatus = "all"
 
@@ -45,6 +43,7 @@ class StartPage(tk.Frame):
         self.modelDir = config["MODEL_DIR"]
         self.colorPalette = config["COLOR_PALETTE"]
         self.midiFilename = config["DEFAULT_MIDI_FILE"]
+        self.models = config["MODELS"]
 
     def loadMidiFile(self):
         self.midi = MidiFile(self.midiFilename)
@@ -72,12 +71,16 @@ class StartPage(tk.Frame):
         self.dropDownSel = tk.StringVar(self)
         self.dropDownSel.set("all")
         self.dropDownSel.trace('w', self.change_dropdown)
-        choices = self.models.keys()
-        choices = ['all'] + choices
+        choices = sorted(self.models.keys(), reverse = True)
+        choices.insert(14, '---')
+        choices = ['all'] + ['drumsOnly'] +['melodyModelOnly'] +['---'] + choices
+        
 
         dropDown = tk.OptionMenu(self, self.dropDownSel, *choices)
         dropDown.configure(background = self.colorPalette[1])
         dropDown.grid(row=4, column=0)
+        dropDown['menu'].entryconfigure(3, state="disabled")
+        dropDown['menu'].entryconfigure(18, state="disabled")
         dropDown.pack()
 
     def putOutFileSpinbox(self):
@@ -121,7 +124,7 @@ class StartPage(tk.Frame):
 
     def putSaveButton(self):
         button = tk.Button(self, text="Save",
-                           state=tk.DISABLED ,
+                           #state=tk.DISABLED ,
                            command=lambda: self.save(), highlightbackground = self.colorPalette[2])
         button.grid(row=6, column=0)
         button.pack()
@@ -145,7 +148,7 @@ class StartPage(tk.Frame):
         #print self.dropDownStatus
 
     def save(self):
-        self.projectName = tkSimpleDialog.askstring(title="Project Name", prompt ="Give your Project a name peace!",initialvalue="Mofo3000-{}".format(timeStamp()))
+        self.projectName = tkSimpleDialog.askstring(title="Project Name", prompt ="Give your Project a name pleace!",initialvalue="AiToni-{}".format(timeStamp()))
         if self.projectName == None:
             return
         self.saveDir = tk.filedialog.askdirectory(initialdir = "./",title = "Select Directory")

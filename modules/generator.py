@@ -2,19 +2,10 @@
 import subprocess as sub
 import os
 import re
+import json
 from mido import MidiFile
 from modules.fileManipulator import createModelOutDir
 
-def modelNames(Model_dir):
-    model_files = os.listdir(Model_dir)
-    model = dict()
-    drum_model = dict()
-    for f in model_files:
-        if f.startswith("Drums"):
-            drum_model[re.sub(".magDrums-", "", f)] = f
-        else:
-            model[re.sub(".mag", "", f)] = f
-    return model, drum_model
 
 class magentaJob():
     def __init__(self, parent):
@@ -26,7 +17,8 @@ class magentaJob():
 
     def configMagentaJob(self,parent):
         self.tempGeneratorDir = parent.config["TEMPDIR"]
-        self.generatorPath = parent.config["GENERATOR_PATH"]
+        self.melodyGeneratorPath = parent.config["MELODY_GENERATOR_PATH"]
+        self.drumGeneratorPath = parent.config["DRUM_GENERATOR_PATH"]
         self.modelDir = parent.config["MODEL_DIR"]
         self.midiFilename = parent.midiFilename
         self.outDir = parent.config["OUT_DIR"]
@@ -37,10 +29,13 @@ class magentaJob():
         self.generateBaseCommand()
         self.joinBaseArgs()
         self.callMagentaScript()
+    
         
     def generateBaseCommand(self):
-        command = "python " + self.generatorPath
-        self.baseCommand = command
+        melodyCommand = "python " + self.melodyGeneratorPath
+        self.melodyBaseCommand = melodyCommand
+        drumsCommand = "python " + self.drumGeneratorPath
+        self.drumBaseCommand = drumsCommand
         
     def joinBaseArgs(self):
         finalOutClipLength =self.includingInputClipLength()
@@ -53,29 +48,48 @@ class magentaJob():
         self.baseArgs = args
         
     def includingInputClipLength(self):
-        print self.outClipLength, self.midi.length
         length = int((int(self.outClipLength)*4+self.midi.length*2)*4)
-        print length
         return length
-        
+    
+    def getAllDrumModels(self):
+        models = {}
+        for model, attrs in self.models.iteritems():
+            if attrs["type"] == "drum":
+                models[model] = attrs
+        return models
+    
+    def getAllMelodyModels(self):
+        models = {}
+        for model, attrs in self.models.iteritems():
+            if attrs["type"] == "melody":
+                models[model] = attrs
+        return models
+    
     def callMagentaScript(self):
-        if (self.modelChoice !='all'):
-            models = {self.modelChoice: self.models[self.modelChoice]}
+        if (self.modelChoice == 'all'):
+            models = self.models.copy()
+        elif (self.modelChoice == 'melodyModelOnly'):
+            models = self.getAllMelodyModels()
+        elif (self.modelChoice == 'drumsOnly'):
+            models = self.getAllDrumModels()
         else:
-            models = self.models
+            models = {self.modelChoice: self.models[self.modelChoice]}
 
-        for model,path in models.iteritems():
+        for model, attributes in models.iteritems():
             model_out = createModelOutDir(self.outDir, model)
-            print model_out
-            ex_command = self.generateExecCommand(model_out, path)
+            ex_command = self.generateExecCommand(model_out, attributes)
+            print ex_command
             sub.call(ex_command, shell=True)
             
-    def generateExecCommand(self, model_out, path):
+    def generateExecCommand(self, model_out, attributes):
         outDir_arg = "--output_dir={}".format(model_out)
-        modelPath_arg = "--bundle_file=" + self.modelDir + path
+        modelPath_arg = "--bundle_file=" + os.path.join(self.modelDir, attributes["file"])
         ex_args = self.baseArgs
         ex_args.append(outDir_arg)
         ex_args.append(modelPath_arg)
-        ex_command = self.baseCommand + ' ' + ' '.join(ex_args)
+        if attributes["type"] == "melody":
+            ex_command = self.melodyBaseCommand + ' ' + ' '.join(ex_args)
+        else:
+            ex_command = self.drumBaseCommand + ' ' + ' '.join(ex_args)
         return ex_command
 

@@ -1,46 +1,28 @@
 from tkinter import filedialog, ttk
 import tkinter as tk
 from mido import MidiFile
-#import re
-#import time
+import json
+import os
+import re
 
 from modules.gui import StartPage
-from modules.generator import modelNames
 from modules.fileManipulator import createOutdir
 
-
-WIDTH = 500
-HEIGHT = 300
-WINDOW_SIZE = "{}x{}".format(WIDTH, HEIGHT)
-MODEL_DIR = "/Users/janeramba/Documents/python/Mag/"
-GENERATOR_PATH = "/Users/janeramba/Documents/python/magenta/magenta/models/polyphony_rnn/polyphony_rnn_generate.py"
-TEMPDIR = './.TempGeneratorOut/'
-
-config = {
-    "WIDTH" : WIDTH,
-    "HEIGHT" : HEIGHT,
-    "MODEL_DIR" : MODEL_DIR,
-    "GENERATOR_PATH" : GENERATOR_PATH,
-    "TEMPDIR": TEMPDIR,
-    "OUT_DIR": createOutdir(TEMPDIR),
-    "DEFAULT_MIDI_FILE" : './melody.mid',
-    "COLOR_PALETTE" : ["#96ceb4","#ffeead", "#ff6f69", "#ffcc5c", "#88d8b0"],
-    "DEFAULT_OUT_DIR" : "./"
-}
 
 
 class Minerator(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-
-        self.geometry(WINDOW_SIZE)
+        self.loadConfigs()
+        self.setupConfigs()
+        self.loadModelMetaData()
+        self.geometry(self.config["WINDOW_SIZE"])
         self.title("Toni's Midi Generator")
         self.iconbitmap(r'/Users/janeramba/Documents/python/GUI/Jonathan-Rey-Simpsons-Homer-Simpson-01-Donut.icns')
-        self.colorPalette = config["COLOR_PALETTE"]
-        self.configure(bg=self.colorPalette[2])
+        self.configure(bg=self.config["COLOR_PALETTE"][2])
         self.frames = {}
 
-        frame = StartPage(config)
+        frame = StartPage(self.config)
         self.frames[StartPage] = frame
         frame.grid(row=0, column=0, sticky = "nsew")
         self.showFrame(StartPage)
@@ -49,23 +31,45 @@ class Minerator(tk.Tk):
     def showFrame(self, cont):
         frame = self.frames[cont]
         frame.tkraise()
+    
+    def loadConfigs(self):
+        with open('config.json', 'r') as fd:
+            config = json.load(fd)
+        self.config = config
+    
+    def loadModelMetaData(self):
+        model_files = os.listdir(self.config["MODEL_DIR"])
+        model_files = sorted(model_files, key=unicode.lower)
+        with open('data/modelShortNames.json', 'r') as df:
+            shortNames = json.load(df)
+        models = dict()
+        for f in model_files:
+            modelName = re.sub(".mag", "", f)
+            if f.startswith("Drums"):
+                models[modelName] = {
+                    "file": f,
+                    "type": "drum",
+                    "short": shortNames[modelName]
+                }
+            else:
+                models[modelName] = {
+                    "file": f,
+                    "type": "melody",
+                    "short": shortNames[modelName]
+                }
+        self.config["MODELS"] = models
+    
+    def setupConfigs(self):
+        winsize = "{}x{}".format(self.config["WIDTH"], self.config["HEIGHT"])
+        self.config["WINDOW_SIZE"] = winsize
+        self.config["OUT_DIR"] = createOutdir(self.config["TEMPDIR"])
 
 
-'''
-runFrame = Frame(root, width = WIDTH, height = 50)
-runFrame.configure(bg = colorPalette[4])
-runFrame.grid(column=0, row=2, sticky=(N,W,E,S))
-runFrame.pack(pady = 10, padx = 10)
-
-saveFrame = Frame(root, width = WIDTH, height = 50)
-saveFrame.configure(bg = colorPalette[2])
-saveFrame.grid(column=0, row=0, sticky=(N,W,E,S))
-saveFrame.pack(pady = 10, padx = 10)
-'''
 def main():
     app = Minerator()
     print "Entering Mainloop"
     app.mainloop()
+
 
 if __name__ == "__main__":
     main()
