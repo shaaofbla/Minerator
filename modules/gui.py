@@ -1,6 +1,6 @@
 import Tkinter as tk
 #from Tkinter import simpledialog
-import tkSimpleDialog
+import tkSimpleDialog, tkFileDialog
 from mido import MidiFile
 
 from modules.generator import magentaJob
@@ -151,7 +151,7 @@ class StartPage(tk.Frame):
         self.projectName = tkSimpleDialog.askstring(title="Project Name", prompt ="Give your Project a name pleace!",initialvalue="AiToni-{}".format(timeStamp()))
         if self.projectName == None:
             return
-        self.saveDir = tk.filedialog.askdirectory(initialdir = "./",title = "Select Directory")
+        self.saveDir = tkFileDialog.askdirectory(initialdir = "./",title = "Select Directory")
         if self.saveDir == "":
             return
         jobSaver = saver(self)
